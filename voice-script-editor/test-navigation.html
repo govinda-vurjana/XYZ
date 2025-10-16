@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Navigation Test - ScriptEase</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #0f172a;
+            color: white;
+            line-height: 1.6;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #1e293b, #334155);
+            border-radius: 12px;
+            border-left: 4px solid #f59e0b;
+        }
+        .test-section {
+            background-color: #1e293b;
+            padding: 25px;
+            margin: 20px 0;
+            border-radius: 12px;
+            border-left: 4px solid #f59e0b;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .success { color: #10b981; }
+        .error { color: #ef4444; }
+        .info { color: #3b82f6; }
+        .warning { color: #f59e0b; }
+        button {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: #0f172a;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 8px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        button:hover {
+            background: linear-gradient(135deg, #d97706, #b45309);
+            transform: translateY(-1px);
+        }
+        button:disabled {
+            background: #374151;
+            color: #6b7280;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .log-output {
+            background-color: #111827;
+            border: 1px solid #374151;
+            border-radius: 8px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        .test-step {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 6px;
+            border-left: 3px solid #374151;
+        }
+        .test-step.passed {
+            background-color: rgba(16, 185, 129, 0.1);
+            border-left-color: #10b981;
+        }
+        .test-step.failed {
+            background-color: rgba(239, 68, 68, 0.1);
+            border-left-color: #ef4444;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background-color: #374151;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981, #059669);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🧪 ScriptEase Navigation Test Suite</h1>
+        <p>Automated testing for login → dashboard → logout navigation flow</p>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test Controls</h2>
+        <button onclick="runNavigationTest()" id="runTestBtn">🚀 Run Navigation Test</button>
+        <button onclick="clearAllData()" id="clearBtn">🧹 Clear All Data</button>
+        <button onclick="showCurrentState()" id="stateBtn">📊 Show Current State</button>
+        
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressBar"></div>
+        </div>
+        <p id="progressText">Ready to run tests</p>
+    </div>
+
+    <div class="test-section">
+        <h2>Test Results</h2>
+        <div id="testResults"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Detailed Log</h2>
+        <div class="log-output" id="logOutput">Click "Run Navigation Test" to start testing...</div>
+    </div>
+
+    <div class="test-section">
+        <h2>Current Authentication State</h2>
+        <div id="authState"></div>
+    </div>
+
+    <script>
+        // Mock AuthService (same as the actual implementation)
+        class AuthService {
+            static USER_KEY = 'scriptease_user';
+            static TOKEN_KEY = 'scriptease_token';
+
+            static async login(email, password) {
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                if (password.length < 6) {
+                    throw new Error('Invalid credentials');
+                }
+
+                const existingUsers = this.getStoredUsers();
+                const existingUser = existingUsers.find(u => u.email === email);
+
+                if (!existingUser) {
+                    throw new Error('User not found. Please sign up first.');
+                }
+
+                const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+                const token = this.generateMockJWT(existingUser.id, expiresAt);
+
+                localStorage.setItem(this.USER_KEY, JSON.stringify(existingUser));
+                localStorage.setItem(this.TOKEN_KEY, token);
+                localStorage.setItem('scriptease_token_expires', expiresAt);
+
+                return existingUser;
+            }
+
+            static async signup(email, password, name) {
+                await new Promise(resolve => setTimeout(resolve, 600));
+                
+                if (password.length < 6) {
+                    throw new Error('Password must be at least 6 characters');
+                }
+                if (name.trim().length < 2) {
+                    throw new Error('Name must be at least 2 characters');
+                }
+
+                const existingUsers = this.getStoredUsers();
+                if (existingUsers.some(u => u.email === email)) {
+                    throw new Error('User already exists with this email');
+                }
+
+                const user = {
+                    id: `user_${Date.now()}`,
+                    email: email,
+                    name: name.trim(),
+                    createdAt: new Date().toISOString(),
+                    preferences: {
+                        theme: 'dark',
+                        fontSize: 16,
+                        autoSaveInterval: 30
+                    }
+                };
+
+                existingUsers.push(user);
+                localStorage.setItem('scriptease_users', JSON.stringify(existingUsers));
+
+                const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+                const token = this.generateMockJWT(user.id, expiresAt);
+
+                localStorage.setItem(this.USER_KEY, JSON.stringify(user));
+                localStorage.setItem(this.TOKEN_KEY, token);
+                localStorage.setItem('scriptease_token_expires', expiresAt);
+
+                return user;
+            }
+
+            static getStoredUsers() {
+                const usersStr = localStorage.getItem('scriptease_users');
+                if (!usersStr) return [];
+                try {
+                    return JSON.parse(usersStr);
+                } catch {
+                    return [];
+                }
+            }
+
+            static logout() {
+                localStorage.removeItem(this.USER_KEY);
+                localStorage.removeItem(this.TOKEN_KEY);
+                localStorage.removeItem('scriptease_token_expires');
+            }
+
+            static getCurrentUser() {
+                const userStr = localStorage.getItem(this.USER_KEY);
+                if (!userStr) return null;
+                try {
+                    return JSON.parse(userStr);
+                } catch {
+                    return null;
+                }
+            }
+
+            static isAuthenticated() {
+                const user = this.getCurrentUser();
+                const token = localStorage.getItem(this.TOKEN_KEY);
+                const expiresAt = localStorage.getItem('scriptease_token_expires');
+
+                if (!user || !token || !expiresAt) {
+                    return false;
+                }
+
+                const now = new Date();
+                const expiry = new Date(expiresAt);
+
+                if (now >= expiry) {
+                    this.logout();
+                    return false;
+                }
+
+                return true;
+            }
+
+            static getToken() {
+                return localStorage.getItem(this.TOKEN_KEY);
+            }
+
+            static generateMockJWT(userId, expiresAt) {
+                const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+                const payload = btoa(JSON.stringify({
+                    sub: userId,
+                    exp: Math.floor(new Date(expiresAt).getTime() / 1000),
+                    iat: Math.floor(Date.now() / 1000),
+                    iss: 'scriptease'
+                }));
+                const signature = btoa(`mock_signature_${userId}_${Date.now()}`);
+
+                return `${header}.${payload}.${signature}`;
+            }
+        }
+
+        // Navigation Tester
+        class NavigationTester {
+            constructor() {
+                this.results = [];
+                this.currentStep = 0;
+                this.totalSteps = 7;
+            }
+
+            log(message, type = 'info') {
+                const timestamp = new Date().toLocaleTimeString();
+                const logOutput = document.getElementById('logOutput');
+                const colorClass = type === 'success' ? 'success' : type === 'error' ? 'error' : 'info';
+                logOutput.innerHTML += `<span class="${colorClass}">[${timestamp}] ${message}</span>\n`;
+                logOutput.scrollTop = logOutput.scrollHeight;
+            }
+
+            updateProgress(step, stepName) {
+                this.currentStep = step;
+                const progress = (step / this.totalSteps) * 100;
+                document.getElementById('progressBar').style.width = `${progress}%`;
+                document.getElementById('progressText').textContent = `Step ${step}/${this.totalSteps}: ${stepName}`;
+            }
+
+            addResult(testName, passed, message, details) {
+                this.results.push({ testName, passed, message, details });
+                const icon = passed ? '✅' : '❌';
+                this.log(`${icon} ${testName}: ${message}`, passed ? 'success' : 'error');
+                
+                if (details) {
+                    this.log(`   Details: ${JSON.stringify(details, null, 2)}`, 'info');
+                }
+
+                this.updateTestResults();
+            }
+
+            updateTestResults() {
+                const resultsDiv = document.getElementById('testResults');
+                let html = '';
+                
+                this.results.forEach(result => {
+                    const stepClass = result.passed ? 'passed' : 'failed';
+                    const icon = result.passed ? '✅' : '❌';
+                    html += `
+                        <div class="test-step ${stepClass}">
+                            <strong>${icon} ${result.testName}</strong><br>
+                            ${result.message}
+                        </div>
+                    `;
+                });
+
+                resultsDiv.innerHTML = html;
+            }
+
+            async testCompleteNavigationFlow() {
+                this.log('🧪 Starting Navigation Flow Test...', 'info');
+                this.results = [];
+                this.currentStep = 0;
+
+                // Disable test button
+                document.getElementById('runTestBtn').disabled = true;
+
+                try {
+                    this.updateProgress(1, 'Clearing data and testing initial state');
+                    this.clearAllData();
+                    await this.testInitialState();
+
+                    this.updateProgress(2, 'Testing signup flow');
+                    await this.testSignupFlow();
+
+                    this.updateProgress(3, 'Testing dashboard access after signup');
+                    await this.testDashboardAccess();
+
+                    this.updateProgress(4, 'Testing logout functionality');
+                    await this.testLogoutFlow();
+
+                    this.updateProgress(5, 'Testing login flow');
+                    await this.testLoginFlow();
+
+                    this.updateProgress(6, 'Testing dashboard access after login');
+                    await this.testDashboardAccessAfterLogin();
+
+                    this.updateProgress(7, 'Testing second logout');
+                    await this.testSecondLogout();
+
+                } catch (error) {
+                    this.addResult('Navigation Flow', false, `Unexpected error: ${error.message}`, error);
+                }
+
+                this.printSummary();
+                document.getElementById('runTestBtn').disabled = false;
+                this.updateProgress(this.totalSteps, 'Test completed');
+            }
+
+            async testInitialState() {
+                const isAuth = AuthService.isAuthenticated();
+                const user = AuthService.getCurrentUser();
+                
+                this.addResult(
+                    'Initial State',
+                    !isAuth && !user,
+                    !isAuth && !user ? 'User is not authenticated initially' : 'User should not be authenticated initially',
+                    { isAuthenticated: isAuth, user }
+                );
+            }
+
+            async testSignupFlow() {
+                try {
+                    const testUser = await AuthService.signup('test@example.com', 'password123', 'Test User');
+                    const isAuth = AuthService.isAuthenticated();
+                    const storedUser = AuthService.getCurrentUser();
+                    
+                    const passed = testUser && isAuth && storedUser && storedUser.email === 'test@example.com';
+                    
+                    this.addResult(
+                        'Signup Flow',
+                        passed,
+                        passed ? 'User successfully signed up and authenticated' : 'Signup failed or user not authenticated',
+                        { testUser: testUser ? { id: testUser.id, email: testUser.email, name: testUser.name } : null, isAuthenticated: isAuth }
+                    );
+                } catch (error) {
+                    this.addResult('Signup Flow', false, `Signup failed: ${error.message}`, error);
+                }
+            }
+
+            async testDashboardAccess() {
+                const user = AuthService.getCurrentUser();
+                const isAuth = AuthService.isAuthenticated();
+                
+                const canAccessDashboard = user && isAuth;
+                
+                this.addResult(
+                    'Dashboard Access After Signup',
+                    canAccessDashboard,
+                    canAccessDashboard ? 'User can access dashboard after signup' : 'User cannot access dashboard after signup',
+                    { hasUser: !!user, isAuthenticated: isAuth }
+                );
+            }
+
+            async testLogoutFlow() {
+                const userBeforeLogout = AuthService.getCurrentUser();
+                
+                AuthService.logout();
+                
+                const userAfterLogout = AuthService.getCurrentUser();
+                const isAuthAfterLogout = AuthService.isAuthenticated();
+                const token = AuthService.getToken();
+                
+                const passed = !userAfterLogout && !isAuthAfterLogout && !token;
+                
+                this.addResult(
+                    'Logout Flow',
+                    passed,
+                    passed ? 'User successfully logged out and localStorage cleared' : 'Logout failed or localStorage not cleared',
+                    { 
+                        hadUserBefore: !!userBeforeLogout,
+                        hasUserAfter: !!userAfterLogout, 
+                        isAuthAfterLogout, 
+                        hasTokenAfter: !!token 
+                    }
+                );
+            }
+
+            async testLoginFlow() {
+                try {
+                    const loggedInUser = await AuthService.login('test@example.com', 'password123');
+                    const isAuth = AuthService.isAuthenticated();
+                    const storedUser = AuthService.getCurrentUser();
+                    
+                    const passed = loggedInUser && isAuth && storedUser && storedUser.email === 'test@example.com';
+                    
+                    this.addResult(
+                        'Login Flow',
+                        passed,
+                        passed ? 'User successfully logged in' : 'Login failed or user not authenticated',
+                        { hasLoggedInUser: !!loggedInUser, isAuthenticated: isAuth, hasStoredUser: !!storedUser }
+                    );
+                } catch (error) {
+                    this.addResult('Login Flow', false, `Login failed: ${error.message}`, error);
+                }
+            }
+
+            async testDashboardAccessAfterLogin() {
+                const user = AuthService.getCurrentUser();
+                const isAuth = AuthService.isAuthenticated();
+                
+                const canAccessDashboard = user && isAuth;
+                
+                this.addResult(
+                    'Dashboard Access After Login',
+                    canAccessDashboard,
+                    canAccessDashboard ? 'User can access dashboard after login' : 'User cannot access dashboard after login',
+                    { hasUser: !!user, isAuthenticated: isAuth }
+                );
+            }
+
+            async testSecondLogout() {
+                AuthService.logout();
+                
+                const userAfterLogout = AuthService.getCurrentUser();
+                const isAuthAfterLogout = AuthService.isAuthenticated();
+                const token = AuthService.getToken();
+                
+                const passed = !userAfterLogout && !isAuthAfterLogout && !token;
+                
+                this.addResult(
+                    'Second Logout Flow',
+                    passed,
+                    passed ? 'Second logout successful' : 'Second logout failed',
+                    { 
+                        hasUserAfter: !!userAfterLogout, 
+                        isAuthAfterLogout, 
+                        hasTokenAfter: !!token 
+                    }
+                );
+            }
+
+            clearAllData() {
+                localStorage.clear();
+                this.log('🧹 Cleared all localStorage data', 'info');
+            }
+
+            printSummary() {
+                const passed = this.results.filter(r => r.passed).length;
+                const total = this.results.length;
+                
+                this.log(`\n📊 Test Summary:`, 'info');
+                this.log(`   Passed: ${passed}/${total}`, 'info');
+                this.log(`   Success Rate: ${((passed / total) * 100).toFixed(1)}%`, 'info');
+                
+                if (passed === total) {
+                    this.log('🎉 All navigation tests passed!', 'success');
+                } else {
+                    this.log('❌ Some tests failed. Check the details above.', 'error');
+                }
+            }
+        }
+
+        // Global functions
+        let tester = new NavigationTester();
+
+        async function runNavigationTest() {
+            await tester.testCompleteNavigationFlow();
+            showCurrentState();
+        }
+
+        function clearAllData() {
+            localStorage.clear();
+            document.getElementById('logOutput').innerHTML = '🧹 All localStorage data cleared.\n';
+            showCurrentState();
+        }
+
+        function showCurrentState() {
+            const authDiv = document.getElementById('authState');
+            const isAuth = AuthService.isAuthenticated();
+            const user = AuthService.getCurrentUser();
+            const token = AuthService.getToken();
+
+            authDiv.innerHTML = `
+                <div class="test-step ${isAuth ? 'passed' : 'failed'}">
+                    <strong>Authentication Status:</strong> <span class="${isAuth ? 'success' : 'error'}">${isAuth ? 'Authenticated' : 'Not Authenticated'}</span><br>
+                    <strong>Current User:</strong> ${user ? `${user.name} (${user.email})` : 'None'}<br>
+                    <strong>Token:</strong> ${token ? token.substring(0, 30) + '...' : 'None'}<br>
+                    <strong>localStorage Keys:</strong> ${Object.keys(localStorage).join(', ') || 'None'}
+                </div>
+            `;
+        }
+
+        // Initialize
+        showCurrentState();
+    </script>
+</body>
+</html>

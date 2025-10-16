@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Formatting Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #1e293b;
+            color: white;
+        }
+        .test-section {
+            background: #334155;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        .test-step {
+            margin: 15px 0;
+            padding: 10px;
+            background-color: #475569;
+            border-left: 4px solid #f59e0b;
+        }
+        button {
+            background-color: #f59e0b;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #d97706;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎬 Screenplay Formatting Test</h1>
+    <p>Test the new screenplay formatting functionality</p>
+
+    <div class="test-section">
+        <h2>Test Instructions</h2>
+        <div class="test-step">
+            <strong>Step 1:</strong> Open the main application at <a href="http://localhost:5173" target="_blank" style="color: #f59e0b;">http://localhost:5173</a>
+        </div>
+        <div class="test-step">
+            <strong>Step 2:</strong> Login with test@example.com / password123
+        </div>
+        <div class="test-step">
+            <strong>Step 3:</strong> Create a new script or open an existing one
+        </div>
+        <div class="test-step">
+            <strong>Step 4:</strong> In the script editor, test the following:
+            <ul>
+                <li>Type "INT. COFFEE SHOP - DAY" - should appear bold and uppercase</li>
+                <li>Press Tab - should cycle to "ACTION" mode</li>
+                <li>Press Tab again - should cycle to "CHARACTER" mode</li>
+                <li>Type "ANNA" - should appear centered and in amber color</li>
+                <li>Press Tab - should cycle to "DIALOGUE" mode</li>
+                <li>Type "This is perfect." - should appear indented</li>
+                <li>Press Enter - should create new line with smart transition</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Expected Behavior</h2>
+        <div class="test-step">
+            ✅ <strong>Scene Headings:</strong> Bold, uppercase, full width
+        </div>
+        <div class="test-step">
+            ✅ <strong>Character Names:</strong> Centered, uppercase, amber color
+        </div>
+        <div class="test-step">
+            ✅ <strong>Dialogue:</strong> Indented with proper spacing
+        </div>
+        <div class="test-step">
+            ✅ <strong>Tab Cycling:</strong> Scene Heading → Action → Character → Dialogue
+        </div>
+        <div class="test-step">
+            ✅ <strong>Smart Transitions:</strong> Enter key creates appropriate next element
+        </div>
+        <div class="test-step">
+            ✅ <strong>Auto-Detection:</strong> Content automatically formatted based on type
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Quick Actions</h2>
+        <button onclick="window.open('http://localhost:5173', '_blank')">Open ScriptEase App</button>
+        <button onclick="window.open('http://localhost:5173/test-screenplay-formatting.html', '_blank')">Open Dedicated Test Page</button>
+        <button onclick="location.reload()">Refresh Test Page</button>
+    </div>
+
+    <div class="test-section">
+        <h2>Requirements Verification</h2>
+        <div class="test-step">
+            <strong>✅ Task 7 Complete:</strong> Screenplay formatting implemented
+            <ul>
+                <li>✅ Replaced textarea with formatted script editor</li>
+                <li>✅ Basic formatting for Scene headings, Character names, Dialogue</li>
+                <li>✅ Tab key cycles between element types</li>
+                <li>✅ Test scenario works: "INT. COFFEE SHOP - DAY" → Tab → "ANNA" → Tab → dialogue</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

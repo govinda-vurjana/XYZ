@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 interface LoginFormProps {
   onLogin: (email: string, password: string) => void;
   onSignup: (email: string, password: string, name: string) => void;
+  onForgotPassword: () => void;
 }
 
 interface FormErrors {
@@ -13,7 +14,7 @@ interface FormErrors {
   general?: string;
 }
 
-export default function LoginForm({ onLogin, onSignup }: LoginFormProps) {
+export default function LoginForm({ onLogin, onSignup, onForgotPassword }: LoginFormProps) {
   const [isSignupMode, setIsSignupMode] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -231,6 +232,18 @@ export default function LoginForm({ onLogin, onSignup }: LoginFormProps) {
                 </div>
               )}
             </div>
+
+            {!isSignupMode && (
+              <div className="text-right">
+                <button
+                  type="button"
+                  onClick={onForgotPassword}
+                  className="text-amber-500 hover:text-amber-400 text-sm font-medium transition-colors duration-200"
+                >
+                  Forgot Password?
+                </button>
+              </div>
+            )}
 
             <button
               type="submit"

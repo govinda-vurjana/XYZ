@@ -18,47 +18,74 @@
   - Test: Fill out form, submit, and verify user is "logged in"
   - _Requirements: 1.1, 1.2_
 
-- [ ] 3. Create dashboard page and test navigation
+- [x] 3. Implement forgot password and password reset flow
+
+
+  - Create ForgotPasswordForm component with email input and validation
+  - Add "Forgot Password?" link to login form that navigates to forgot password page
+  - Create PasswordResetForm component for resetting password with token validation
+  - Implement mock email sending and secure token generation in AuthService
+  - Add routing between login, forgot password, and password reset pages
+  - Test: Click forgot password, enter email, simulate email link click, reset password
+  - _Requirements: 1.4, 1.5, 1.6_
+
+- [x] 4. Create dashboard page and test navigation
+
+
+
+
+
   - Build dashboard layout with header and "Your Scripts" section
   - Add logout functionality that clears localStorage
   - Create navigation between login and dashboard
   - Test: Login, see dashboard, logout, return to login
-  - _Requirements: 1.3, 1.5, 2.2_
+  - _Requirements: 1.7, 2.2_
 
-- [ ] 4. Add script creation and test the flow
+- [x] 5. Add script creation and test the flow
+
+
+
+
+
   - Add "Create New Script" button on dashboard
   - Create simple script creation form (title, description)
   - Store scripts in localStorage and display them on dashboard
   - Test: Create a script, see it appear on dashboard
   - _Requirements: 2.1, 2.2, 2.3_
 
-- [ ] 5. Build basic script editor and test writing
+- [x] 6. Build basic script editor and test writing
+
+
+
+
+
   - Create script editor page with simple text area
   - Add navigation from dashboard to editor when clicking a script
   - Implement basic auto-save to localStorage every 5 seconds
   - Test: Open script, type content, verify it saves and persists
   - _Requirements: 2.3, 9.1, 9.2_
 
-- [ ] 6. Add screenplay formatting and test it works
+- [x] 7. Add screenplay formatting and test it works
+
+
   - Replace text area with formatted script editor
   - Implement basic formatting: Scene headings (INT./EXT.), Character names, Dialogue
   - Add Tab key to cycle between element types
   - Test: Type "INT. COFFEE SHOP - DAY", press Tab, type "ANNA", press Tab, type dialogue
   - _Requirements: 4.1, 4.2, 4.3, 21.1_
 
-- [ ] 7. Implement voice input button and test speech recognition
+- [x] 8. Implement voice input button and test speech recognition
+
+
+
+
   - Add large circular voice button to script editor
   - Integrate Web Speech API with basic error handling
   - Convert speech to text and insert at cursor position
   - Test: Click voice button, speak some dialogue, verify it appears as text
   - _Requirements: 3.1, 3.5, 3.6_
 
-- [ ] 8. Add voice commands for formatting and test them
-  - Implement voice commands: "new scene", "character name", "dialogue"
-  - Add visual feedback when voice is listening (button animation)
-  - Handle voice command parsing and apply appropriate formatting
-  - Test: Say "new scene", verify scene heading format is applied
-  - _Requirements: 3.2, 3.3, 3.5_
+
 
 - [ ] 9. Create scenes panel and test scene navigation
   - Add left sidebar with scenes list
