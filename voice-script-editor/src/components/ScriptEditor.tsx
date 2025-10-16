@@ -5,6 +5,7 @@ import FormattedScriptEditor from './FormattedScriptEditor';
 import VoiceInput from './VoiceInput';
 import ScenesPanel from './ScenesPanel';
 import ElementsPanel from './ElementsPanel';
+import ThemeToggle from './ThemeToggle';
 import { type Scene } from '../utils/sceneDetection';
 
 interface ScriptEditorProps {
@@ -215,7 +216,7 @@ export default function ScriptEditor({ user, scriptId, onBackToDashboard }: Scri
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 bg-gray-50 dark:bg-gradient-to-br text-white dark:text-white text-gray-900">
       {/* Background decoration */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 right-20 w-64 h-64 bg-amber-500/5 rounded-full blur-3xl"></div>
@@ -223,20 +224,20 @@ export default function ScriptEditor({ user, scriptId, onBackToDashboard }: Scri
       </div>
 
       {/* Header */}
-      <header className="relative bg-slate-800/50 backdrop-blur-xl border-b border-slate-700/50">
+      <header className="relative bg-slate-800/50 dark:bg-slate-800/50 bg-white/80 dark:bg-slate-800/50 backdrop-blur-xl border-b border-slate-700/50 dark:border-slate-700/50 border-gray-200 dark:border-slate-700/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
               <button
                 onClick={onBackToDashboard}
-                className="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors duration-200"
+                className="flex items-center space-x-2 text-gray-400 dark:text-gray-400 text-gray-600 hover:text-white dark:hover:text-white hover:text-gray-900 dark:hover:text-white transition-colors duration-200"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
                 <span>Back to Dashboard</span>
               </button>
-              <div className="w-px h-6 bg-slate-600"></div>
+              <div className="w-px h-6 bg-slate-600 dark:bg-slate-600 bg-gray-300 dark:bg-slate-600"></div>
               <div className="flex items-center space-x-3">
                 <div className="w-8 h-8 bg-gradient-to-r from-amber-500 to-orange-500 rounded-lg flex items-center justify-center">
                   <svg className="w-5 h-5 text-slate-900" fill="currentColor" viewBox="0 0 24 24">
@@ -245,22 +246,22 @@ export default function ScriptEditor({ user, scriptId, onBackToDashboard }: Scri
                   </svg>
                 </div>
                 <div>
-                  <h1 className="text-lg font-semibold text-white">{script.title}</h1>
-                  <p className="text-sm text-gray-400">{script.description || 'No description'}</p>
+                  <h1 className="text-lg font-semibold text-white dark:text-white text-gray-900">{script.title}</h1>
+                  <p className="text-sm text-gray-400 dark:text-gray-400 text-gray-600">{script.description || 'No description'}</p>
                 </div>
               </div>
             </div>
             
             {/* Mode Toggle */}
             <div className="flex items-center">
-              <div className="bg-slate-700/50 backdrop-blur-sm rounded-full p-1 border border-slate-600/50">
+              <div className="bg-slate-700/50 dark:bg-slate-700/50 bg-gray-200 dark:bg-slate-700/50 backdrop-blur-sm rounded-full p-1 border border-slate-600/50 dark:border-slate-600/50 border-gray-300 dark:border-slate-600/50">
                 <div className="flex items-center space-x-1">
                   <button
                     onClick={() => setEditorMode('talk')}
                     className={`flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
                       editorMode === 'talk'
                         ? 'bg-amber-500 text-slate-900 shadow-lg'
-                        : 'text-gray-400 hover:text-white hover:bg-slate-600/50'
+                        : 'text-gray-400 dark:text-gray-400 text-gray-600 hover:text-white dark:hover:text-white hover:text-gray-900 dark:hover:text-white hover:bg-slate-600/50 dark:hover:bg-slate-600/50 hover:bg-gray-300 dark:hover:bg-slate-600/50'
                     }`}
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -274,7 +275,7 @@ export default function ScriptEditor({ user, scriptId, onBackToDashboard }: Scri
                     className={`flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
                       editorMode === 'write'
                         ? 'bg-amber-500 text-slate-900 shadow-lg'
-                        : 'text-gray-400 hover:text-white hover:bg-slate-600/50'
+                        : 'text-gray-400 dark:text-gray-400 text-gray-600 hover:text-white dark:hover:text-white hover:text-gray-900 dark:hover:text-white hover:bg-slate-600/50 dark:hover:bg-slate-600/50 hover:bg-gray-300 dark:hover:bg-slate-600/50'
                     }`}
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -287,22 +288,24 @@ export default function ScriptEditor({ user, scriptId, onBackToDashboard }: Scri
             </div>
             
             <div className="flex items-center space-x-4">
+              <ThemeToggle />
+              
               {/* Save status */}
               <div className="flex items-center space-x-2 text-sm">
                 {isSaving ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-amber-500"></div>
-                    <span className="text-gray-400">Saving...</span>
+                    <span className="text-gray-400 dark:text-gray-400 text-gray-600">Saving...</span>
                   </>
                 ) : lastSaved ? (
                   <>
                     <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span className="text-gray-400">
+                    <span className="text-gray-400 dark:text-gray-400 text-gray-600">
                       Saved {ScriptService.formatTimeAgo(lastSaved.toISOString())}
                     </span>
                   </>
                 ) : (
-                  <span className="text-gray-500">Not saved</span>
+                  <span className="text-gray-500 dark:text-gray-500 text-gray-500">Not saved</span>
                 )}
               </div>
               
@@ -322,7 +325,7 @@ export default function ScriptEditor({ user, scriptId, onBackToDashboard }: Scri
       <main className="relative flex-1 flex">
         {/* Left Sidebar */}
         <div className={`transition-all duration-300 ${showSidebar ? 'w-80' : 'w-0'} flex-shrink-0 overflow-hidden`}>
-          <div className="h-full p-4 border-r border-slate-700/50 flex flex-col space-y-4">
+          <div className="h-full p-4 border-r border-slate-700/50 dark:border-slate-700/50 border-gray-200 dark:border-slate-700/50 flex flex-col space-y-4">
             <ScenesPanel
               content={content}
               currentCursorPosition={cursorPosition}
@@ -343,7 +346,7 @@ export default function ScriptEditor({ user, scriptId, onBackToDashboard }: Scri
             <div className="mb-4 flex justify-between items-center">
               <button
                 onClick={() => setShowSidebar(!showSidebar)}
-                className="flex items-center space-x-2 px-3 py-2 bg-slate-700/50 hover:bg-slate-700 text-gray-300 hover:text-white rounded-lg transition-colors"
+                className="flex items-center space-x-2 px-3 py-2 bg-slate-700/50 dark:bg-slate-700/50 bg-gray-200 dark:bg-slate-700/50 hover:bg-slate-700 dark:hover:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-700 text-gray-300 dark:text-gray-300 text-gray-700 hover:text-white dark:hover:text-white hover:text-gray-900 dark:hover:text-white rounded-lg transition-colors"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -415,16 +418,30 @@ She pauses, looks up, and smiles."
                     </svg>
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-white mb-2">Writing Tips</h3>
+                    <h3 className="text-lg font-semibold text-white mb-2">
+                      {editorMode === 'talk' ? 'Voice Writing Tips' : 'Writing Tips'}
+                    </h3>
                     <ul className="text-gray-300 space-y-1 text-sm">
                       <li>• Your work is automatically saved every 5 seconds and when you pause typing</li>
+                      {editorMode === 'talk' ? (
+                        <>
+                          <li>• <strong>Voice mode:</strong> Click the microphone button to start dictating your script</li>
+                          <li>• Speak naturally - voice text will be inserted at your cursor position</li>
+                          <li>• Switch to Write mode in the header to disable voice input and focus on typing</li>
+                        </>
+                      ) : (
+                        <>
+                          <li>• <strong>Write mode:</strong> Focus on traditional keyboard input without voice distractions</li>
+                          <li>• Switch to Talk mode in the header to enable voice dictation</li>
+                        </>
+                      )}
                       <li>• Use Tab key to cycle between element types (Scene Heading → Action → Character → Dialogue)</li>
                       <li>• Press Enter to create a new element with smart type detection</li>
                       <li>• Scene headings: INT./EXT. LOCATION - TIME (automatically formatted)</li>
                       <li>• Character names: ALL CAPS, automatically centered</li>
                       <li>• Dialogue: Automatically indented with proper spacing</li>
                       <li>• Action lines: Full width, describe what happens on screen</li>
-                      <li>• <strong>Scenes panel:</strong> Click any scene in the left sidebar to jump to it instantly</li>
+                      <li>• <strong>Panels:</strong> Click any scene or element in the left sidebar to navigate instantly</li>
                     </ul>
                   </div>
                 </div>
@@ -445,8 +462,8 @@ She pauses, looks up, and smiles."
         </div>
       )}
 
-      {/* Voice Error Display - Fixed at bottom center, above voice button */}
-      {voiceError && (
+      {/* Voice Error Display - Fixed at bottom center, above voice button - Only show in Talk mode */}
+      {editorMode === 'talk' && voiceError && (
         <div className="fixed bottom-32 left-1/2 transform -translate-x-1/2 z-40">
           <div className="bg-red-900/90 backdrop-blur-sm border border-red-500/50 rounded-lg p-3 max-w-md shadow-lg">
             <div className="flex items-center space-x-2">

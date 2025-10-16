@@ -5,6 +5,7 @@ import PasswordResetForm from './components/PasswordResetForm';
 import Dashboard from './components/Dashboard';
 import ScriptEditor from './components/ScriptEditor';
 import { AuthService, type User } from './services/auth';
+import { ThemeProvider } from './contexts/ThemeContext';
 
 type AppView = 'login' | 'forgot-password' | 'reset-password' | 'dashboard' | 'script-editor';
 
@@ -76,56 +77,64 @@ function App() {
     setCurrentView('dashboard');
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-slate-900 text-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto mb-4"></div>
-          <p className="text-gray-400">Loading...</p>
+  const renderContent = () => {
+    if (isLoading) {
+      return (
+        <div className="min-h-screen bg-slate-900 dark:bg-slate-900 text-white flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto mb-4"></div>
+            <p className="text-gray-400">Loading...</p>
+          </div>
         </div>
-      </div>
-    );
-  }
+      );
+    }
 
-  // Render based on current view
-  switch (currentView) {
-    case 'forgot-password':
-      return <ForgotPasswordForm onBackToLogin={handleBackToLogin} />;
-    
-    case 'reset-password':
-      return (
-        <PasswordResetForm 
-          token={resetToken} 
-          onResetComplete={handleResetComplete} 
-        />
-      );
-    
-    case 'dashboard':
-      if (user) {
-        return <Dashboard user={user} onLogout={handleLogout} onOpenScript={handleOpenScript} />;
-      }
-      // If no user but trying to show dashboard, fall back to login
-      setCurrentView('login');
-      return null;
-    
-    case 'script-editor':
-      if (user && currentScriptId) {
-        return <ScriptEditor user={user} scriptId={currentScriptId} onBackToDashboard={handleBackToDashboard} />;
-      }
-      // If no user or script ID, fall back to dashboard
-      setCurrentView('dashboard');
-      return null;
-    
-    case 'login':
-    default:
-      return (
-        <LoginForm 
-          onLogin={handleLogin} 
-          onSignup={handleSignup}
-          onForgotPassword={handleForgotPassword}
-        />
-      );
-  }
+    // Render based on current view
+    switch (currentView) {
+      case 'forgot-password':
+        return <ForgotPasswordForm onBackToLogin={handleBackToLogin} />;
+      
+      case 'reset-password':
+        return (
+          <PasswordResetForm 
+            token={resetToken} 
+            onResetComplete={handleResetComplete} 
+          />
+        );
+      
+      case 'dashboard':
+        if (user) {
+          return <Dashboard user={user} onLogout={handleLogout} onOpenScript={handleOpenScript} />;
+        }
+        // If no user but trying to show dashboard, fall back to login
+        setCurrentView('login');
+        return null;
+      
+      case 'script-editor':
+        if (user && currentScriptId) {
+          return <ScriptEditor user={user} scriptId={currentScriptId} onBackToDashboard={handleBackToDashboard} />;
+        }
+        // If no user or script ID, fall back to dashboard
+        setCurrentView('dashboard');
+        return null;
+      
+      case 'login':
+      default:
+        return (
+          <LoginForm 
+            onLogin={handleLogin} 
+            onSignup={handleSignup}
+            onForgotPassword={handleForgotPassword}
+          />
+        );
+    }
+  };
+
+  return (
+    <ThemeProvider>
+      {renderContent()}
+    </ThemeProvider>
+  );
 }
 
 export default App

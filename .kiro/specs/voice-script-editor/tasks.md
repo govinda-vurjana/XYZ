@@ -102,7 +102,9 @@
   - Test: Write script with characters and locations, verify they appear in panel
   - _Requirements: 5.1, 5.2, 5.4, 5.5_
 
-- [ ] 11. Add dark/light theme toggle and test theme switching
+- [x] 11. Add dark/light theme toggle and test theme switching
+
+
   - Add theme toggle button in header
   - Implement theme switching with localStorage persistence
   - Update all components to respect theme setting

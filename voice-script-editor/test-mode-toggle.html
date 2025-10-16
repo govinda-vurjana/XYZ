@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mode Toggle Test - ScriptEase</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: white;
+            font-family: system-ui, -apple-system, sans-serif;
+            min-height: 100vh;
+        }
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .test-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding: 2rem;
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 12px;
+            border: 1px solid rgba(71, 85, 105, 0.5);
+        }
+        .mode-toggle-demo {
+            background: rgba(30, 41, 59, 0.3);
+            border: 1px solid rgba(71, 85, 105, 0.3);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        .toggle-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+        .mode-toggle {
+            background: rgba(71, 85, 105, 0.5);
+            backdrop-filter: blur(12px);
+            border-radius: 9999px;
+            padding: 4px;
+            border: 1px solid rgba(71, 85, 105, 0.5);
+        }
+        .toggle-buttons {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .toggle-button {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 9999px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+            border: none;
+            cursor: pointer;
+        }
+        .toggle-button.active {
+            background: #f59e0b;
+            color: #0f172a;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .toggle-button.inactive {
+            color: #9ca3af;
+            background: transparent;
+        }
+        .toggle-button.inactive:hover {
+            color: white;
+            background: rgba(71, 85, 105, 0.5);
+        }
+        .mode-content {
+            text-align: center;
+            padding: 2rem;
+            background: rgba(15, 23, 42, 0.5);
+            border-radius: 8px;
+            border: 1px solid rgba(71, 85, 105, 0.3);
+        }
+        .voice-indicator {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #f59e0b, #f97316);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            animation: pulse 2s infinite;
+        }
+        .write-indicator {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        .feature-list {
+            text-align: left;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        .feature-list li {
+            margin-bottom: 0.5rem;
+            color: #cbd5e1;
+        }
+        .instructions {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .instructions h3 {
+            margin: 0 0 1rem 0;
+            color: #60a5fa;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="test-header">
+            <h1>Editor Mode Toggle Test</h1>
+            <p>Test the Talk/Write mode toggle functionality</p>
+        </div>
+
+        <div class="instructions">
+            <h3>Test Instructions:</h3>
+            <ul>
+                <li>Click between "Talk" and "Write" modes to see the interface change</li>
+                <li>In Talk mode: Voice microphone should be visible and voice features enabled</li>
+                <li>In Write mode: Voice microphone should be hidden, focus on typing</li>
+                <li>Notice how the tips and interface adapt to the selected mode</li>
+                <li>The toggle should have smooth animations and clear visual feedback</li>
+            </ul>
+        </div>
+
+        <div class="mode-toggle-demo">
+            <div class="toggle-container">
+                <div class="mode-toggle">
+                    <div class="toggle-buttons">
+                        <button id="talk-btn" class="toggle-button active">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
+                            </svg>
+                            <span>Talk</span>
+                        </button>
+                        
+                        <button id="write-btn" class="toggle-button inactive">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+                            </svg>
+                            <span>Write</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="mode-content" class="mode-content">
+                <!-- Content will be dynamically updated -->
+            </div>
+        </div>
+
+        <div class="mode-toggle-demo">
+            <h3 style="text-align: center; margin-bottom: 1rem; color: #60a5fa;">Implementation Details</h3>
+            <div style="background: rgba(15, 23, 42, 0.5); border-radius: 8px; padding: 1.5rem;">
+                <ul class="feature-list">
+                    <li><strong>State Management:</strong> Uses React useState to track current mode</li>
+                    <li><strong>Conditional Rendering:</strong> Voice input only shows in Talk mode</li>
+                    <li><strong>Visual Feedback:</strong> Active mode highlighted with amber background</li>
+                    <li><strong>Smooth Transitions:</strong> CSS transitions for mode switching</li>
+                    <li><strong>Contextual Tips:</strong> Writing tips adapt based on selected mode</li>
+                    <li><strong>Accessibility:</strong> Clear visual indicators and hover states</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentMode = 'talk';
+        
+        const talkBtn = document.getElementById('talk-btn');
+        const writeBtn = document.getElementById('write-btn');
+        const modeContent = document.getElementById('mode-content');
+
+        function updateModeDisplay() {
+            if (currentMode === 'talk') {
+                talkBtn.className = 'toggle-button active';
+                writeBtn.className = 'toggle-button inactive';
+                
+                modeContent.innerHTML = `
+                    <div class="voice-indicator">
+                        <svg width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #0f172a;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
+                        </svg>
+                    </div>
+                    <h3 style="color: #f59e0b; margin-bottom: 1rem;">Talk Mode Active</h3>
+                    <p style="color: #cbd5e1; margin-bottom: 1.5rem;">Voice input enabled - microphone button visible</p>
+                    <ul class="feature-list">
+                        <li>✓ Voice microphone button displayed</li>
+                        <li>✓ Voice error messages shown</li>
+                        <li>✓ Voice-specific writing tips</li>
+                        <li>✓ Optimized for dictation workflow</li>
+                    </ul>
+                `;
+            } else {
+                talkBtn.className = 'toggle-button inactive';
+                writeBtn.className = 'toggle-button active';
+                
+                modeContent.innerHTML = `
+                    <div class="write-indicator">
+                        <svg width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: white;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+                        </svg>
+                    </div>
+                    <h3 style="color: #3b82f6; margin-bottom: 1rem;">Write Mode Active</h3>
+                    <p style="color: #cbd5e1; margin-bottom: 1.5rem;">Traditional typing mode - voice input hidden</p>
+                    <ul class="feature-list">
+                        <li>✓ Voice microphone button hidden</li>
+                        <li>✓ No voice error distractions</li>
+                        <li>✓ Keyboard-focused writing tips</li>
+                        <li>✓ Optimized for typing workflow</li>
+                    </ul>
+                `;
+            }
+        }
+
+        talkBtn.addEventListener('click', () => {
+            currentMode = 'talk';
+            updateModeDisplay();
+        });
+
+        writeBtn.addEventListener('click', () => {
+            currentMode = 'write';
+            updateModeDisplay();
+        });
+
+        // Initialize display
+        updateModeDisplay();
+
+        console.log('Mode Toggle Test initialized');
+        console.log('Current mode:', currentMode);
+    </script>
+</body>
+</html>
