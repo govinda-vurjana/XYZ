@@ -104,7 +104,7 @@ function App() {
       
       case 'dashboard':
         if (user) {
-          return <Dashboard user={user} onLogout={handleLogout} onOpenScript={handleOpenScript} />;
+          return <Dashboard user={user} onLogout={handleLogout} onOpenScript={handleOpenScript} onUserUpdate={setUser} />;
         }
         // If no user but trying to show dashboard, fall back to login
         setCurrentView('login');

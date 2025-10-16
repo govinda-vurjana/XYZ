@@ -1,9 +1,18 @@
 import { useState, useRef, useEffect } from 'react';
 
+interface VoiceSettings {
+  language: string;
+  sensitivity: number;
+  customCommands: Record<string, string>;
+  microphoneDeviceId?: string;
+  noiseReduction: boolean;
+}
+
 interface VoiceInputProps {
   onTextReceived: (text: string) => void;
   onError?: (error: string) => void;
   className?: string;
+  voiceSettings?: VoiceSettings;
 }
 
 interface SpeechRecognitionEvent extends Event {
@@ -38,7 +47,7 @@ declare global {
   }
 }
 
-export default function VoiceInput({ onTextReceived, onError, className = '' }: VoiceInputProps) {
+export default function VoiceInput({ onTextReceived, onError, className = '', voiceSettings }: VoiceInputProps) {
   const [isListening, setIsListening] = useState(false);
   const [isSupported, setIsSupported] = useState(false);
   const [interimText, setInterimText] = useState('');
@@ -54,7 +63,7 @@ export default function VoiceInput({ onTextReceived, onError, className = '' }: 
       const recognition = new SpeechRecognition();
       recognition.continuous = true;
       recognition.interimResults = true;
-      recognition.lang = 'en-US';
+      recognition.lang = voiceSettings?.language || 'en-US';
 
       recognition.addEventListener('start', () => {
         setIsListening(true);
@@ -158,7 +167,7 @@ export default function VoiceInput({ onTextReceived, onError, className = '' }: 
         clearTimeout(silenceTimeoutRef.current);
       }
     };
-  }, [onTextReceived, onError, isListening]);
+  }, [onTextReceived, onError, isListening, voiceSettings]);
 
   const toggleListening = () => {
     if (!isSupported) {

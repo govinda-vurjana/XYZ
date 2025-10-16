@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
-import { ScriptService, type Script } from '../services/script';
+import { ScriptService, type Script, type Draft } from '../services/script';
 import { type User } from '../services/auth';
-import FormattedScriptEditor from './FormattedScriptEditor';
+import EditablePagedEditor from './EditablePagedEditor';
+import CeltxSidebar from './CeltxSidebar';
 import VoiceInput from './VoiceInput';
-import ScenesPanel from './ScenesPanel';
-import ElementsPanel from './ElementsPanel';
 import { type Scene } from '../utils/sceneDetection';
+import { ExportService } from '../services/export';
 
 interface ScriptEditorProps {
   user: User;
@@ -24,6 +24,15 @@ export default function ScriptEditor({ user, scriptId, onBackToDashboard }: Scri
   const [cursorPosition, setCursorPosition] = useState(0);
   const [showSidebar, setShowSidebar] = useState(true);
   const [editorMode, setEditorMode] = useState<'talk' | 'write'>('talk');
+  const [isExporting, setIsExporting] = useState(false);
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const [drafts, setDrafts] = useState<Draft[]>([]);
+  const [currentDraft, setCurrentDraft] = useState<Draft | null>(null);
+  const [showDraftMenu, setShowDraftMenu] = useState(false);
+  const [showCreateDraftModal, setShowCreateDraftModal] = useState(false);
+  const [newDraftName, setNewDraftName] = useState('');
+  const [isCreatingDraft, setIsCreatingDraft] = useState(false);
+  // Remove viewMode - always use paged view
 
   const autoSaveIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -41,6 +50,21 @@ export default function ScriptEditor({ user, scriptId, onBackToDashboard }: Scri
       }
     };
   }, [scriptId, user.id]);
+
+  // Close menus when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showExportMenu && !(event.target as Element).closest('.export-menu-container')) {
+        setShowExportMenu(false);
+      }
+      if (showDraftMenu && !(event.target as Element).closest('.draft-menu-container')) {
+        setShowDraftMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showExportMenu, showDraftMenu]);
 
   useEffect(() => {
     // Set up auto-save every 5 seconds
@@ -68,8 +92,22 @@ export default function ScriptEditor({ user, scriptId, onBackToDashboard }: Scri
         return;
       }
       
+      // Load drafts for this script
+      const scriptDrafts = ScriptService.getScriptDrafts(scriptId);
+      setDrafts(scriptDrafts);
+      
+      // Set current draft if one is selected
+      let activeDraft = null;
+      if (loadedScript.currentDraftId) {
+        activeDraft = ScriptService.getDraft(loadedScript.currentDraftId);
+        setCurrentDraft(activeDraft);
+      }
+      
+      // Set content from current draft or main script
+      const currentContent = ScriptService.getCurrentContent(loadedScript);
+      
       setScript(loadedScript);
-      setContent(loadedScript.content);
+      setContent(currentContent);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load script');
     } finally {
@@ -83,12 +121,25 @@ export default function ScriptEditor({ user, scriptId, onBackToDashboard }: Scri
     try {
       setIsSaving(true);
       
-      const updatedScript = await ScriptService.updateScript(script.id, user.id, {
-        content: content,
-        pageCount: Math.max(1, Math.ceil(content.length / 250)) // Rough page count estimation
-      });
+      if (currentDraft) {
+        // Save to current draft
+        const updatedDraft = await ScriptService.updateDraft(currentDraft.id, {
+          content: content,
+          pageCount: Math.max(1, Math.ceil(content.length / 250))
+        });
+        setCurrentDraft(updatedDraft);
+        
+        // Update drafts list
+        setDrafts(prev => prev.map(d => d.id === updatedDraft.id ? updatedDraft : d));
+      } else {
+        // Save to main script
+        const updatedScript = await ScriptService.updateScript(script.id, user.id, {
+          content: content,
+          pageCount: Math.max(1, Math.ceil(content.length / 250))
+        });
+        setScript(updatedScript);
+      }
       
-      setScript(updatedScript);
       setLastSaved(new Date());
     } catch (err) {
       console.error('Failed to save script:', err);
@@ -175,6 +226,103 @@ export default function ScriptEditor({ user, scriptId, onBackToDashboard }: Scri
     setCursorPosition(scene.startPosition);
   };
 
+  const handleExport = async (format: 'pdf' | 'txt') => {
+    if (!script || !content.trim()) {
+      alert('No content to export');
+      return;
+    }
+
+    try {
+      setIsExporting(true);
+      setShowExportMenu(false);
+
+      const exportTitle = currentDraft 
+        ? `${script.title} - ${currentDraft.name}`
+        : script.title;
+
+      const exportOptions = {
+        format,
+        title: exportTitle,
+        author: user.name,
+        includePageNumbers: true
+      };
+
+      if (format === 'pdf') {
+        await ExportService.exportToPDF(content, exportOptions);
+      } else {
+        await ExportService.exportToTXT(content, exportOptions);
+      }
+    } catch (error) {
+      console.error('Export failed:', error);
+      alert('Export failed. Please try again.');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleCreateDraft = async () => {
+    if (!script || !newDraftName.trim()) return;
+
+    try {
+      setIsCreatingDraft(true);
+      
+      const draft = await ScriptService.createDraft(
+        script.id, 
+        user.id, 
+        newDraftName.trim(), 
+        content
+      );
+      
+      // Add to drafts list
+      setDrafts(prev => [draft, ...prev]);
+      
+      // Switch to the new draft
+      await handleSwitchDraft(draft.id);
+      
+      // Reset form
+      setNewDraftName('');
+      setShowCreateDraftModal(false);
+    } catch (error) {
+      console.error('Failed to create draft:', error);
+      alert(error instanceof Error ? error.message : 'Failed to create draft');
+    } finally {
+      setIsCreatingDraft(false);
+    }
+  };
+
+  const handleSwitchDraft = async (draftId: string | null) => {
+    if (!script) return;
+
+    try {
+      // Save current content before switching
+      await saveContent();
+      
+      // Update script's current draft
+      await ScriptService.setCurrentDraft(script.id, user.id, draftId);
+      
+      // Load new content
+      if (draftId) {
+        const draft = ScriptService.getDraft(draftId);
+        if (draft) {
+          setCurrentDraft(draft);
+          setContent(draft.content);
+        }
+      } else {
+        setCurrentDraft(null);
+        const updatedScript = ScriptService.getScript(script.id, user.id);
+        if (updatedScript) {
+          setScript(updatedScript);
+          setContent(updatedScript.content);
+        }
+      }
+      
+      setShowDraftMenu(false);
+    } catch (error) {
+      console.error('Failed to switch draft:', error);
+      alert('Failed to switch draft');
+    }
+  };
+
 
 
   if (isLoading) {
@@ -251,42 +399,190 @@ export default function ScriptEditor({ user, scriptId, onBackToDashboard }: Scri
               </div>
             </div>
             
-            {/* Mode Toggle */}
-            <div className="flex items-center">
-              <div className="bg-gray-200 dark:bg-slate-700/50 backdrop-blur-sm rounded-full p-1 border border-gray-300 dark:border-slate-600/50">
-                <div className="flex items-center space-x-1">
-                  <button
-                    onClick={() => setEditorMode('talk')}
-                    className={`flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-                      editorMode === 'talk'
-                        ? 'bg-amber-500 text-slate-900 shadow-lg'
-                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-300 dark:hover:bg-slate-600/50'
-                    }`}
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-                    </svg>
-                    <span>Talk</span>
-                  </button>
-                  
-                  <button
-                    onClick={() => setEditorMode('write')}
-                    className={`flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-                      editorMode === 'write'
-                        ? 'bg-amber-500 text-slate-900 shadow-lg'
-                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-300 dark:hover:bg-slate-600/50'
-                    }`}
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                    </svg>
-                    <span>Write</span>
-                  </button>
-                </div>
+            {/* Input Mode Toggle */}
+            <div className="bg-gray-200 dark:bg-slate-700/50 backdrop-blur-sm rounded-full p-1 border border-gray-300 dark:border-slate-600/50">
+              <div className="flex items-center space-x-1">
+                <button
+                  onClick={() => setEditorMode('talk')}
+                  className={`flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                    editorMode === 'talk'
+                      ? 'bg-amber-500 text-slate-900 shadow-lg'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-300 dark:hover:bg-slate-600/50'
+                  }`}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                  </svg>
+                  <span>Talk</span>
+                </button>
+                
+                <button
+                  onClick={() => setEditorMode('write')}
+                  className={`flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                    editorMode === 'write'
+                      ? 'bg-amber-500 text-slate-900 shadow-lg'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-300 dark:hover:bg-slate-600/50'
+                  }`}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                  </svg>
+                  <span>Write</span>
+                </button>
               </div>
             </div>
             
             <div className="flex items-center space-x-4">
+              {/* Draft Selector */}
+              <div className="relative draft-menu-container">
+                <button
+                  onClick={() => setShowDraftMenu(!showDraftMenu)}
+                  className="flex items-center space-x-2 px-4 py-2 bg-slate-700/50 hover:bg-slate-700 text-gray-300 hover:text-white rounded-lg transition-all duration-200 border border-slate-600/50"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <span className="text-sm font-medium">
+                    {currentDraft ? currentDraft.name : 'Main Script'}
+                  </span>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                {/* Draft Menu */}
+                {showDraftMenu && (
+                  <div className="absolute left-0 top-full mt-2 w-64 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg shadow-lg z-50">
+                    <div className="py-2">
+                      {/* Main Script Option */}
+                      <button
+                        onClick={() => handleSwitchDraft(null)}
+                        className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-slate-700 flex items-center justify-between ${
+                          !currentDraft ? 'bg-gray-100 dark:bg-slate-700 text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-300'
+                        }`}
+                      >
+                        <div className="flex items-center space-x-2">
+                          <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                          <span>Main Script</span>
+                        </div>
+                        {!currentDraft && (
+                          <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </button>
+
+                      {/* Drafts */}
+                      {drafts.length > 0 && (
+                        <>
+                          <div className="border-t border-gray-200 dark:border-slate-600 my-2"></div>
+                          <div className="px-4 py-1">
+                            <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Drafts</span>
+                          </div>
+                          {drafts.map((draft) => (
+                            <button
+                              key={draft.id}
+                              onClick={() => handleSwitchDraft(draft.id)}
+                              className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-slate-700 flex items-center justify-between ${
+                                currentDraft?.id === draft.id ? 'bg-gray-100 dark:bg-slate-700 text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-300'
+                              }`}
+                            >
+                              <div className="flex items-center space-x-2">
+                                <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                </svg>
+                                <div>
+                                  <div className="font-medium">{draft.name}</div>
+                                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                                    {ScriptService.formatTimeAgo(draft.updatedAt)}
+                                  </div>
+                                </div>
+                              </div>
+                              {currentDraft?.id === draft.id && (
+                                <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                              )}
+                            </button>
+                          ))}
+                        </>
+                      )}
+
+                      {/* Create New Draft */}
+                      <div className="border-t border-gray-200 dark:border-slate-600 my-2"></div>
+                      <button
+                        onClick={() => {
+                          setShowDraftMenu(false);
+                          setShowCreateDraftModal(true);
+                        }}
+                        className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 flex items-center space-x-2"
+                      >
+                        <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                        </svg>
+                        <span>Save as New Draft</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Export Button */}
+              <div className="relative export-menu-container">
+                <button
+                  onClick={() => setShowExportMenu(!showExportMenu)}
+                  disabled={isExporting || !content.trim()}
+                  className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:from-gray-600 disabled:to-gray-600 text-white rounded-lg transition-all duration-200 disabled:cursor-not-allowed"
+                >
+                  {isExporting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <span className="text-sm font-medium">Exporting...</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      <span className="text-sm font-medium">Export</span>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </>
+                  )}
+                </button>
+
+                {/* Export Menu */}
+                {showExportMenu && (
+                  <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg shadow-lg z-50">
+                    <div className="py-2">
+                      <button
+                        onClick={() => handleExport('pdf')}
+                        className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 flex items-center space-x-2"
+                      >
+                        <svg className="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/>
+                          <path d="M14 2v6h6"/>
+                          <path d="M16 13a1 1 0 0 0-1-1h-4a1 1 0 0 0 0 2h4a1 1 0 0 0 1-1zm0 3a1 1 0 0 0-1-1h-4a1 1 0 0 0 0 2h4a1 1 0 0 0 1-1z"/>
+                        </svg>
+                        <span>Export as PDF</span>
+                      </button>
+                      <button
+                        onClick={() => handleExport('txt')}
+                        className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 flex items-center space-x-2"
+                      >
+                        <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <span>Export as TXT</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               {/* Save status */}
               <div className="flex items-center space-x-2 text-sm">
                 {isSaving ? (
@@ -320,131 +616,45 @@ export default function ScriptEditor({ user, scriptId, onBackToDashboard }: Scri
 
       {/* Main Editor */}
       <main className="relative flex-1 flex">
-        {/* Left Sidebar */}
-        <div className={`transition-all duration-300 ${showSidebar ? 'w-80' : 'w-0'} flex-shrink-0 overflow-hidden`}>
-          <div className="h-full p-4 border-r border-gray-200 dark:border-slate-700/50 flex flex-col space-y-4">
-            <ScenesPanel
-              content={content}
-              currentCursorPosition={cursorPosition}
-              onSceneClick={handleSceneNavigation}
-              className="flex-1"
-            />
-            <ElementsPanel
-              content={content}
-              className="flex-1"
-            />
-          </div>
-        </div>
+        {/* Celtx-style Sidebar */}
+        {showSidebar && (
+          <CeltxSidebar
+            script={script}
+            currentDraft={currentDraft}
+            content={content}
+            user={user}
+            currentCursorPosition={cursorPosition}
+            onSceneClick={handleSceneNavigation}
+          />
+        )}
 
-        {/* Main Content Area */}
-        <div className="flex-1 overflow-hidden">
-          <div className="h-full px-4 sm:px-6 lg:px-8 py-8 overflow-y-auto">
-            {/* Sidebar Toggle */}
-            <div className="mb-4 flex justify-between items-center">
+        {/* Paged Editor */}
+        <div className="flex-1 flex flex-col">
+          {/* Sidebar Toggle */}
+          {!showSidebar && (
+            <div className="p-4">
               <button
-                onClick={() => setShowSidebar(!showSidebar)}
+                onClick={() => setShowSidebar(true)}
                 className="flex items-center space-x-2 px-3 py-2 bg-gray-200 dark:bg-slate-700/50 hover:bg-gray-300 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white rounded-lg transition-colors"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
-                <span className="text-sm">{showSidebar ? 'Hide' : 'Show'} Panels</span>
+                <span className="text-sm">Show Panels</span>
               </button>
             </div>
+          )}
 
-            <div className="max-w-4xl mx-auto">
-              <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-2xl overflow-hidden">
-                <div className="p-6">
-                  <div className="mb-4">
-                    <label htmlFor="script-content" className="block text-sm font-medium text-gray-300 mb-2">
-                      Script Content
-                    </label>
-                    <p className="text-xs text-gray-500 mb-4">
-                      Start writing your script. Auto-save is enabled - your work will be saved automatically every 5 seconds and when you stop typing.
-                    </p>
-                  </div>
-                  
-                  <FormattedScriptEditor
-                    ref={editorRef}
-                    content={content}
-                    onChange={handleContentChange}
-                    onCursorPositionChange={handleCursorPositionChange}
-                    placeholder="Start writing your script here...
-
-Example:
-FADE IN:
-
-INT. COFFEE SHOP - DAY
-
-A cozy coffee shop buzzes with morning activity. ANNA (25), a determined writer, sits at a corner table with her laptop.
-
-ANNA
-(typing furiously)
-This is it. This is the scene that changes everything.
-
-She pauses, looks up, and smiles."
-                    className="font-mono text-sm leading-relaxed"
-                  />
-                  
-                  <div className="mt-4 flex justify-between items-center text-sm text-gray-400">
-                    <div className="flex items-center space-x-4">
-                      <span>{content.length} characters</span>
-                      <span>{content.split('\n').length} lines</span>
-                      <span>~{Math.max(1, Math.ceil(content.length / 250))} pages</span>
-                    </div>
-                    <div className="flex items-center space-x-4">
-                      <div className="flex items-center space-x-2">
-                        <kbd className="px-2 py-1 bg-slate-700/50 rounded text-xs">Tab</kbd>
-                        <span className="text-xs">cycle element types</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <kbd className="px-2 py-1 bg-slate-700/50 rounded text-xs">Enter</kbd>
-                        <span className="text-xs">new element</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Tips */}
-              <div className="mt-6 bg-gradient-to-r from-blue-900/20 to-cyan-900/20 backdrop-blur-sm border border-blue-500/20 rounded-2xl p-6">
-                <div className="flex items-start space-x-3">
-                  <div className="w-8 h-8 bg-blue-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                    <svg className="w-5 h-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd"/>
-                    </svg>
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-white mb-2">
-                      {editorMode === 'talk' ? 'Voice Writing Tips' : 'Writing Tips'}
-                    </h3>
-                    <ul className="text-gray-300 space-y-1 text-sm">
-                      <li>• Your work is automatically saved every 5 seconds and when you pause typing</li>
-                      {editorMode === 'talk' ? (
-                        <>
-                          <li>• <strong>Voice mode:</strong> Click the microphone button to start dictating your script</li>
-                          <li>• Speak naturally - voice text will be inserted at your cursor position</li>
-                          <li>• Switch to Write mode in the header to disable voice input and focus on typing</li>
-                        </>
-                      ) : (
-                        <>
-                          <li>• <strong>Write mode:</strong> Focus on traditional keyboard input without voice distractions</li>
-                          <li>• Switch to Talk mode in the header to enable voice dictation</li>
-                        </>
-                      )}
-                      <li>• Use Tab key to cycle between element types (Scene Heading → Action → Character → Dialogue)</li>
-                      <li>• Press Enter to create a new element with smart type detection</li>
-                      <li>• Scene headings: INT./EXT. LOCATION - TIME (automatically formatted)</li>
-                      <li>• Character names: ALL CAPS, automatically centered</li>
-                      <li>• Dialogue: Automatically indented with proper spacing</li>
-                      <li>• Action lines: Full width, describe what happens on screen</li>
-                      <li>• <strong>Panels:</strong> Click any scene or element in the left sidebar to navigate instantly</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <EditablePagedEditor
+            script={script}
+            currentDraft={currentDraft}
+            content={content}
+            onContentChange={handleContentChange}
+            onCursorPositionChange={handleCursorPositionChange}
+            user={user}
+            showSidebar={showSidebar}
+            onToggleSidebar={() => setShowSidebar(!showSidebar)}
+          />
         </div>
       </main>
 
@@ -455,6 +665,7 @@ She pauses, looks up, and smiles."
             onTextReceived={handleVoiceText}
             onError={handleVoiceError}
             className="flex flex-col items-center"
+            voiceSettings={user.preferences?.voiceSettings}
           />
         </div>
       )}
@@ -468,6 +679,85 @@ She pauses, looks up, and smiles."
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
               </svg>
               <p className="text-sm text-red-300">{voiceError}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Draft Modal */}
+      {showCreateDraftModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 w-full max-w-md mx-4 border border-gray-200 dark:border-slate-700">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Save as New Draft</h3>
+              <button
+                onClick={() => {
+                  setShowCreateDraftModal(false);
+                  setNewDraftName('');
+                }}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <div className="mb-4">
+              <label htmlFor="draft-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Draft Name
+              </label>
+              <input
+                id="draft-name"
+                type="text"
+                value={newDraftName}
+                onChange={(e) => setNewDraftName(e.target.value)}
+                placeholder="e.g., First Draft, Revision 1, Director's Cut"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                maxLength={50}
+                autoFocus
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                {newDraftName.length}/50 characters
+              </p>
+            </div>
+            
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mb-4">
+              <div className="flex items-start space-x-2">
+                <svg className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div className="text-sm text-blue-700 dark:text-blue-300">
+                  <p className="font-medium mb-1">About Drafts</p>
+                  <p>This will save your current content as a new draft. You can switch between drafts anytime and each draft maintains its own version of the script.</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex space-x-3">
+              <button
+                onClick={() => {
+                  setShowCreateDraftModal(false);
+                  setNewDraftName('');
+                }}
+                className="flex-1 px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCreateDraft}
+                disabled={!newDraftName.trim() || isCreatingDraft}
+                className="flex-1 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 disabled:from-gray-400 disabled:to-gray-400 text-white rounded-lg transition-all duration-200 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+              >
+                {isCreatingDraft ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    <span>Creating...</span>
+                  </>
+                ) : (
+                  <span>Create Draft</span>
+                )}
+              </button>
             </div>
           </div>
         </div>

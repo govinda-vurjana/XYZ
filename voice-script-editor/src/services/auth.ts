@@ -85,7 +85,13 @@ export class AuthService {
       preferences: {
         theme: 'dark',
         fontSize: 16,
-        autoSaveInterval: 30
+        autoSaveInterval: 30,
+        voiceSettings: {
+          language: 'en-US',
+          sensitivity: 0.5,
+          customCommands: {},
+          noiseReduction: true
+        }
       }
     };
 
@@ -313,5 +319,52 @@ export class AuthService {
     } catch {
       return {};
     }
+  }
+
+  static async updateUserPreferences(userId: string, preferences: Partial<User['preferences']>): Promise<User> {
+    // Simulate API call delay
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    // Get current user
+    const currentUser = this.getCurrentUser();
+    if (!currentUser || currentUser.id !== userId) {
+      throw new Error('User not found or unauthorized');
+    }
+
+    // Ensure we have default preferences if none exist
+    const defaultPreferences = {
+      theme: 'dark' as const,
+      fontSize: 16,
+      autoSaveInterval: 30,
+      voiceSettings: {
+        language: 'en-US',
+        sensitivity: 0.5,
+        customCommands: {},
+        noiseReduction: true
+      }
+    };
+
+    // Update user preferences
+    const updatedUser: User = {
+      ...currentUser,
+      preferences: {
+        ...defaultPreferences,
+        ...currentUser.preferences,
+        ...preferences
+      }
+    };
+
+    // Update in stored users list
+    const existingUsers = this.getStoredUsers();
+    const userIndex = existingUsers.findIndex(u => u.id === userId);
+    if (userIndex !== -1) {
+      existingUsers[userIndex] = updatedUser;
+      localStorage.setItem('scriptease_users', JSON.stringify(existingUsers));
+    }
+
+    // Update current user in localStorage
+    localStorage.setItem(this.USER_KEY, JSON.stringify(updatedUser));
+
+    return updatedUser;
   }
 }

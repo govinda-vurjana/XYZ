@@ -300,6 +300,37 @@ graph TB
 - Shows element usage statistics and scene associations
 - Handles element consistency checking across scripts
 
+**EditablePagedEditor**
+- Professional page-based editor with automatic page creation
+- Real-time pagination with ~55 lines per page capacity
+- Auto-navigation to new pages when content overflows
+- Visual page indicators and smooth page transitions
+- Integrated auto-formatting with element type detection
+- Smart suggestions for scene headings and character names
+- Professional screenplay formatting with proper margins and spacing
+
+**CeltxSidebar**
+- Professional sidebar navigation with collapsible sections
+- Scenes panel with numbered scene navigation
+- Elements panel with Characters, Locations, and Props tabs
+- Collaborators section for team management
+- Cast & Crew management interface
+- Modern dark theme with gold/amber accent colors
+
+**ExportService**
+- Professional PDF export with industry-standard screenplay formatting
+- TXT export for plain text versions
+- Maintains proper page breaks, margins, and typography
+- Supports custom formatting options and templates
+- Handles large scripts with efficient processing
+
+**DraftManager**
+- Complete version control system for script drafts
+- Draft creation with timestamps and custom naming
+- Seamless draft switching with content preservation
+- Draft comparison and difference highlighting
+- Automatic draft backup and recovery
+
 ### Backend Services
 
 #### Authentication Service

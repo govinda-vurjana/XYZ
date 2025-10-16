@@ -59,6 +59,10 @@ The Voice Script Editor is a comprehensive web-based application designed for wr
 4. WHEN a user adds action lines THEN the system SHALL format them with proper margins
 5. WHEN a user adds parentheticals THEN the system SHALL format them with proper indentation and parentheses
 6. WHEN a user exports a script THEN the system SHALL maintain industry-standard formatting
+7. WHEN a user types script elements THEN the system SHALL provide real-time element type detection and formatting
+8. WHEN formatting is applied THEN the system SHALL offer smart suggestions for scene headings and character names
+9. WHEN a user works with pages THEN the system SHALL automatically create new pages when content exceeds capacity
+10. WHEN page breaks occur THEN the system SHALL maintain proper screenplay pagination with industry-standard line counts
 
 ### Requirement 5
 
@@ -104,11 +108,13 @@ The Voice Script Editor is a comprehensive web-based application designed for wr
 
 #### Acceptance Criteria
 
-1. WHEN a user requests export THEN the system SHALL offer PDF, DOCX, and TXT format options
-2. WHEN a user exports to PDF THEN the system SHALL maintain proper screenplay formatting and pagination
-3. WHEN a user exports to DOCX THEN the system SHALL preserve formatting and allow further editing in word processors
-4. WHEN a user exports to TXT THEN the system SHALL provide a clean, readable plain text version
+1. WHEN a user requests export THEN the system SHALL offer PDF and TXT format options with professional formatting
+2. WHEN a user exports to PDF THEN the system SHALL maintain industry-standard screenplay formatting with proper margins, fonts, and pagination
+3. WHEN a user exports to PDF THEN the system SHALL include proper page numbering, scene headers, and character formatting
+4. WHEN a user exports to TXT THEN the system SHALL provide a clean, readable plain text version with preserved formatting structure
 5. WHEN export is complete THEN the system SHALL automatically download the file to the user's device
+6. WHEN exporting large scripts THEN the system SHALL handle multi-page documents efficiently with proper page breaks
+7. WHEN export processing occurs THEN the system SHALL provide visual feedback and progress indicators
 
 ### Requirement 9
 
@@ -130,10 +136,12 @@ The Voice Script Editor is a comprehensive web-based application designed for wr
 
 1. WHEN a user creates a new draft THEN the system SHALL create a copy of the current script with a timestamp and version number
 2. WHEN a user views draft history THEN the system SHALL display all drafts with creation dates and optional custom names
-3. WHEN a user switches between drafts THEN the system SHALL load the selected draft content in the editor
-4. WHEN a user compares drafts THEN the system SHALL highlight differences between versions
+3. WHEN a user switches between drafts THEN the system SHALL load the selected draft content seamlessly in the editor
+4. WHEN a user compares drafts THEN the system SHALL highlight differences between versions with visual indicators
 5. WHEN a user deletes a draft THEN the system SHALL require confirmation and maintain at least one draft per script
 6. WHEN a user restores a previous draft THEN the system SHALL create a new draft from the selected version
+7. WHEN draft switching occurs THEN the system SHALL preserve cursor position and editor state
+8. WHEN drafts are managed THEN the system SHALL provide automatic backup and recovery capabilities
 
 ### Requirement 11
 

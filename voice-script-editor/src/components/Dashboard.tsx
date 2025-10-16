@@ -4,14 +4,16 @@ import { ScriptService, type Script } from '../services/script';
 import CreateScriptModal from './CreateScriptModal';
 import ThemeToggle from './ThemeToggle';
 import ConfirmationDialog from './ConfirmationDialog';
+import VoiceSettings from './VoiceSettings';
 
 interface DashboardProps {
   user: User;
   onLogout: () => void;
   onOpenScript: (scriptId: string) => void;
+  onUserUpdate?: (user: User) => void;
 }
 
-export default function Dashboard({ user, onLogout, onOpenScript }: DashboardProps) {
+export default function Dashboard({ user, onLogout, onOpenScript, onUserUpdate }: DashboardProps) {
   const [scripts, setScripts] = useState<Script[]>([]);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -20,6 +22,7 @@ export default function Dashboard({ user, onLogout, onOpenScript }: DashboardPro
     script: Script | null;
   }>({ isOpen: false, script: null });
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isVoiceSettingsOpen, setIsVoiceSettingsOpen] = useState(false);
 
   useEffect(() => {
     loadScripts();
@@ -98,6 +101,15 @@ export default function Dashboard({ user, onLogout, onOpenScript }: DashboardPro
             </div>
             <div className="flex items-center space-x-4">
               <ThemeToggle />
+              <button
+                onClick={() => setIsVoiceSettingsOpen(true)}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-slate-700/50 rounded-lg transition-colors"
+                title="Voice Settings"
+              >
+                <svg className="w-6 h-6 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                </svg>
+              </button>
               <div className="flex items-center space-x-3">
                 <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
                   <span className="text-sm font-semibold text-white">
@@ -257,6 +269,17 @@ export default function Dashboard({ user, onLogout, onOpenScript }: DashboardPro
         onCancel={cancelDeleteScript}
         isDestructive={true}
       />
+
+      {/* Voice Settings Modal */}
+      {isVoiceSettingsOpen && (
+        <VoiceSettings
+          user={user}
+          onUserUpdate={(updatedUser) => {
+            onUserUpdate?.(updatedUser);
+          }}
+          onClose={() => setIsVoiceSettingsOpen(false)}
+        />
+      )}
     </div>
   );
 }
