@@ -263,6 +263,29 @@ graph TB
 - Prominent microphone icon below the mode selection buttons
 - Minimalist design matching the overall application aesthetic
 
+#### Authentication Components
+
+**LoginForm**
+- Unified login and signup form with mode switching
+- Email and password fields with validation and error display
+- "Forgot Password?" link that navigates to password reset flow
+- Professional branding with ScriptEase logo and messaging
+- Responsive design with glass-morphism effects and gradient styling
+
+**ForgotPasswordForm**
+- Dedicated page for password reset requests
+- Single email input field with validation
+- Clear instructions and feedback messages
+- Email sending confirmation with next steps
+- Link back to login page
+
+**PasswordResetForm**
+- Secure password reset page accessed via email link
+- New password and confirm password fields with validation
+- Token validation and expiration handling
+- Success confirmation and automatic redirect to login
+- Error handling for invalid or expired tokens
+
 #### Script Management Components
 
 **ScriptFormatter**
@@ -286,6 +309,9 @@ graph TB
 - Manages JWT token generation and validation
 - Provides user profile management and preferences
 - Handles cross-device session synchronization
+- Processes forgot password requests and generates secure reset tokens
+- Validates password reset tokens and updates user passwords
+- Sends password reset emails with secure links
 
 **AuthMiddleware**
 - Validates JWT tokens on protected routes

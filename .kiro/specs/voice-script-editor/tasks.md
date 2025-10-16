@@ -3,16 +3,15 @@
 - [x] 1. Create basic project setup and verify it works
 
 
-
-
-
   - Initialize React TypeScript project with Vite
   - Configure Tailwind CSS with dark theme
   - Create a simple "Hello ScriptEase" page to verify setup works
   - Test: Run the app and see the page load with dark theme
   - _Requirements: Foundation for all features_
 
-- [ ] 2. Build simple login page and test it
+- [x] 2. Build simple login page and test it
+
+
   - Create basic login form with email/password fields
   - Add form validation and error messages
   - Create mock authentication that stores user in localStorage

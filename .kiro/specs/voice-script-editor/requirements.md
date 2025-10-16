@@ -16,7 +16,9 @@ The Voice Script Editor is a comprehensive web-based application designed for wr
 2. WHEN a user provides valid credentials THEN the system SHALL authenticate and create a secure session
 3. WHEN a user logs in THEN the system SHALL redirect them to their personal dashboard
 4. WHEN a user requests password reset THEN the system SHALL send a secure reset link to their email
-5. WHEN a user logs out THEN the system SHALL terminate the session and redirect to login page
+5. WHEN a user clicks on a password reset link THEN the system SHALL validate the token and allow password change
+6. WHEN a user completes password reset THEN the system SHALL update their password and redirect to login
+7. WHEN a user logs out THEN the system SHALL terminate the session and redirect to login page
 
 ### Requirement 2
 
