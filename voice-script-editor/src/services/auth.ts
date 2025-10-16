@@ -1,3 +1,11 @@
+export interface VoiceSettings {
+  language: string;
+  sensitivity: number;
+  customCommands: Record<string, string>;
+  microphoneDeviceId?: string;
+  noiseReduction: boolean;
+}
+
 export interface User {
   id: string;
   email: string;
@@ -7,6 +15,7 @@ export interface User {
     theme: 'light' | 'dark';
     fontSize: number;
     autoSaveInterval: number;
+    voiceSettings: VoiceSettings;
   };
 }
 

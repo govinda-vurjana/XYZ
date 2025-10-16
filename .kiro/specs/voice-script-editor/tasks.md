@@ -111,14 +111,18 @@
   - Test: Toggle theme, verify colors change, refresh page, verify theme persists
   - _Requirements: 7.1, 7.2, 7.3, 7.4_
 
-- [ ] 12. Implement script deletion and test data management
+- [x] 12. Implement script deletion and test data management
+
   - Add delete button to script cards on dashboard
   - Add confirmation dialog before deletion
   - Remove script from localStorage and update dashboard
   - Test: Delete a script, confirm it's gone, verify other scripts remain
   - _Requirements: 2.4_
 
-- [ ] 13. Add voice settings panel and test voice customization
+- [-] 13. Add voice settings panel and test voice customization
+
+
+
   - Create voice settings page accessible from main settings
   - Add language selection and microphone sensitivity controls
   - Implement settings persistence and application to voice input

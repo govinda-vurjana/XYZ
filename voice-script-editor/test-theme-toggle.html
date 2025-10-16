@@ -104,24 +104,30 @@
             
             // Update test status
             const statusEl = document.getElementById('test-status');
-            if (savedTheme && (savedTheme === 'dark' ? htmlClass : !htmlClass)) {
-                statusEl.textContent = '✅ Theme persistence working correctly';
-                statusEl.className = 'test-status test-pass';
+            if (savedTheme) {
+                const themeMatches = (savedTheme === 'dark' ? htmlClass : !htmlClass);
+                if (themeMatches) {
+                    statusEl.textContent = `✅ Theme persistence working: ${savedTheme} mode active`;
+                    statusEl.className = 'test-status test-pass';
+                } else {
+                    statusEl.textContent = `❌ Theme mismatch: saved ${savedTheme}, HTML dark class: ${htmlClass}`;
+                    statusEl.className = 'test-status test-fail';
+                }
             } else {
-                statusEl.textContent = '❌ Theme persistence needs attention';
-                statusEl.className = 'test-status test-fail';
+                statusEl.textContent = '🧪 No theme saved yet - try toggling theme';
+                statusEl.className = 'test-status';
             }
         }
         
         // Check theme on load
-        setTimeout(checkThemePersistence, 1000);
+        setTimeout(checkThemePersistence, 2000);
         
         // Listen for theme changes
         const observer = new MutationObserver(function(mutations) {
             mutations.forEach(function(mutation) {
                 if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
                     console.log('Theme changed - HTML class updated');
-                    checkThemePersistence();
+                    setTimeout(checkThemePersistence, 100);
                 }
             });
         });
@@ -130,6 +136,25 @@
             attributes: true,
             attributeFilter: ['class']
         });
+        
+        // Add manual test button
+        setTimeout(() => {
+            const testInfo = document.querySelector('.test-info');
+            const testButton = document.createElement('button');
+            testButton.textContent = '🔄 Test Theme Toggle';
+            testButton.style.cssText = 'background: #f59e0b; color: white; padding: 8px 16px; border: none; border-radius: 4px; margin-top: 10px; cursor: pointer;';
+            testButton.onclick = () => {
+                // Try to find and click theme toggle button
+                const themeButton = document.querySelector('button[aria-label*="Switch to"]');
+                if (themeButton) {
+                    themeButton.click();
+                    setTimeout(checkThemePersistence, 200);
+                } else {
+                    alert('Theme toggle button not found. Make sure you are logged in.');
+                }
+            };
+            testInfo.appendChild(testButton);
+        }, 3000);
     </script>
 </body>
 </html>
