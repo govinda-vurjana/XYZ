@@ -76,9 +76,6 @@
 
 - [x] 8. Implement voice input button and test speech recognition
 
-
-
-
   - Add large circular voice button to script editor
   - Integrate Web Speech API with basic error handling
   - Convert speech to text and insert at cursor position
@@ -87,14 +84,18 @@
 
 
 
-- [ ] 9. Create scenes panel and test scene navigation
+- [x] 9. Create scenes panel and test scene navigation
+
+
   - Add left sidebar with scenes list
   - Auto-detect scenes from script content and display in panel
   - Add click-to-navigate functionality to jump to scenes
   - Test: Write multiple scenes, see them in panel, click to navigate
   - _Requirements: 6.1, 6.2, 6.3_
 
-- [ ] 10. Add character/location tracking and test element management
+- [x] 10. Add character/location tracking and test element management
+
+
   - Create elements panel with Characters and Locations tabs
   - Auto-extract characters and locations from script content
   - Display them in organized lists with scene associations

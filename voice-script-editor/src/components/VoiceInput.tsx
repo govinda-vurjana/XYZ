@@ -211,10 +211,10 @@ export default function VoiceInput({ onTextReceived, onError, className = '' }: 
       <button
         onClick={toggleListening}
         className={`
-          w-16 h-16 rounded-full flex items-center justify-center transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-amber-500/30
+          w-16 h-16 rounded-full flex items-center justify-center transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-amber-500/30 shadow-2xl
           ${isListening 
-            ? 'bg-gradient-to-r from-red-500 to-red-600 shadow-lg shadow-red-500/30 animate-pulse' 
-            : 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-lg shadow-amber-500/30'
+            ? 'bg-gradient-to-r from-red-500 to-red-600 shadow-red-500/50 animate-pulse' 
+            : 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-amber-500/50'
           }
         `}
         title={isListening ? 'Stop voice input' : 'Start voice input'}
@@ -230,27 +230,21 @@ export default function VoiceInput({ onTextReceived, onError, className = '' }: 
         )}
       </button>
 
-      {/* Status Text */}
-      <div className="mt-2 text-center min-h-[1.5rem]">
-        {isListening && (
-          <div className="space-y-1">
+      {/* Status Text - Only show when listening for floating design */}
+      {isListening && (
+        <div className="mt-3 bg-slate-800/90 backdrop-blur-sm border border-slate-700/50 rounded-lg px-3 py-2 shadow-lg">
+          <div className="text-center">
             <p className="text-sm text-amber-300 font-medium">
               🎤 Listening...
             </p>
             {interimText && (
-              <p className="text-xs text-gray-400 italic max-w-xs truncate">
+              <p className="text-xs text-gray-400 italic max-w-xs truncate mt-1">
                 "{interimText}"
               </p>
             )}
           </div>
-        )}
-        
-        {!isListening && (
-          <p className="text-sm text-gray-300">
-            Click to start voice input
-          </p>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
